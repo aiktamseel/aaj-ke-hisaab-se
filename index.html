@@ -166,8 +166,7 @@
             
             const resultText = document.getElementById('resultText');
             resultText.innerHTML = 
-                `PKR ${Math.round(amount)} in ${year} would be worth<br>` +
-                `<strong>PKR ${Math.round(presentValue)}</strong> in 2024<br><br>` +
+                `Rs. ${Math.round(amount)} in ${year} ≈ <strong>Rs. ${Math.round(presentValue)}</strong> in 2024<br><br>` +
                 `(Conversion factor: ${relativePrice.toFixed(2)})`;
         }
 
