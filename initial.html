@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PKR Historical to Present Value Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .calculator {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h1>PKR Historical to Present Value Converter</h1>
+        
+        <div class="input-group">
+            <label for="amount">Amount (PKR):</label>
+            <input type="number" id="amount" min="0" step="1" value="1" required>
+        </div>
+        
+        <div class="input-group">
+            <label for="year">Select Year:</label>
+            <select id="year" required>
+                <!-- Years will be populated by JavaScript -->
+            </select>
+        </div>
+        
+        <div id="result" class="result">
+            <h3>Result:</h3>
+            <p id="resultText"></p>
+        </div>
+    </div>
+
+    <script>
+        // Relative prices data (2024 price / past year price)
+        const relativePrices = {
+            // Author's estimation based on local Gold prices
+            // Gold prices data taken from SBP Statistical Handbook 2020
+            "1952": 3185.9445,
+            "1953": 3045.903,
+            "1954": 2857.4967,
+            "1955": 2665.1651,
+            "1956": 2590.4409,
+            "1957": 2474.7962,
+            "1958": 2389.4584,
+            "1959": 2068.4864,
+            "1960": 2068.4864,
+            "1961": 2053.1643,
+            "1962": 2053.1643,
+            "1963": 2053.1643,
+            "1964": 2053.1643,
+            "1965": 2053.1643,
+            "1966": 2053.1643,
+            "1967": 2031.0872,
+            "1968": 1986.9332,
+            "1969": 1724.2926,
+            "1970": 1592.9723,
+            "1971": 1522.5217,
+            "1972": 1381.6206,
+            "1973": 851.7518,
+            "1974": 546.9246,
+            "1975": 450.3722,
+            "1976": 402.096,
+            "1977": 401.4191,
+            "1978": 400.0652,
+            "1979": 295.9387,
+            "1980": 163.8323,
+            "1981": 136.6117,
+            "1982": 123.0014,
+            "1983": 122.9061,
+            "1984": 122.8109,
+            "1985": 122.2561,
+            "1986": 121.3371,
+            "1987": 93.1004,
+            "1988": 83.3106,
+            "1989": 78.4157,
+            "1990": 78.0962,
+            "1991": 77.4572,
+            "1992": 75.8987,
+            "1993": 75.7777,
+            "1994": 59.6558,
+            "1995": 59.4023,
+            "1996": 52.4415,
+            "1997": 49.489,
+            "1998": 47.5801,
+            "1999": 47.1475,
+            "2000": 45.8998,
+            "2001": 44.2695,
+            "2002": 40.4216,
+            "2003": 37.2008,
+            "2004": 32.409,
+            "2005": 28.8852,
+            "2006": 23.0449,
+            "2007": 18.8438,
+            "2008": 14.2598,
+            "2009": 10.7114,
+            "2010": 8.0319,
+            "2011": 6.3104,
+            "2012": 4.9054,
+            "2013": 4.7572,
+            "2014": 4.6831,
+            "2015": 4.6831,
+            "2016": 4.6831,
+            "2017": 4.6831,
+            "2018": 4.5604,
+            "2019": 4.3151,
+            "2020": 3.0488
+        };
+
+        // Populate year dropdown
+        const yearSelect = document.getElementById('year');
+        Object.keys(relativePrices)
+            .sort((a, b) => a - b)
+            .forEach(year => {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearSelect.appendChild(option);
+            });
+        yearSelect.value = "1952"; // Set default year
+
+        function calculateValue() {
+            const amount = parseFloat(document.getElementById('amount').value);
+            const year = document.getElementById('year').value;
+            
+            if (isNaN(amount) || amount < 0) {
+                document.getElementById('resultText').innerHTML = 'Please enter a valid amount';
+                return;
+            }
+
+            const relativePrice = relativePrices[year];
+            const presentValue = amount * relativePrice;
+            
+            const resultText = document.getElementById('resultText');
+            resultText.innerHTML = 
+                `PKR ${Math.round(amount)} in ${year} would be worth<br>` +
+                `<strong>PKR ${Math.round(presentValue)}</strong> in 2024<br><br>` +
+                `(Conversion factor: ${relativePrice.toFixed(2)})`;
+        }
+
+        // Add event listeners for auto-update
+        document.getElementById('amount').addEventListener('input', calculateValue);
+        document.getElementById('year').addEventListener('change', calculateValue);
+
+        // Calculate initial value
+        calculateValue();
+    </script>
+</body>
+</html>
