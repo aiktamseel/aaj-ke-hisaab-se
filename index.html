@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aaj Ke Hisaab Se! 🇵🇰</title>
+    <title>Aaj Ke Hisaab Se - PKR Historic to Present Value Converter</title>
+    <link rel="icon" href="pk.ico" type="image/x-icon" />
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -11,6 +12,10 @@
             margin: 0 auto;
             padding: 20px;
             background-color: #f5f5f5;
+            /* Duh, the inner conflict between using clean background and indie-web texture */
+            /* Get one for yourself from textures.neocities.org */
+            background-image: linear-gradient(0deg, rgba(127, 225, 221, 0.2), rgba(127, 225, 221, 0.2)), url(bg.png);
+            background-blend-mode: multiply;
         }
         .calculator {
             background-color: white;
@@ -46,11 +51,23 @@
         a:hover {
             text-decoration: underline;
         }
+        h1 {
+            margin-bottom: 0;
+        }
+        #tagline {
+            margin: 10px 0 30px;
+            font-size: large;
+        }
+        footer {
+            text-align: center;
+            color: white;
+        }
     </style>
 </head>
 <body>
     <div class="calculator">
-        <h1>PKR Historic to Present Value Converter</h1>
+        <h1>Aaj Ke Hisaab Se</h1>
+        <p id="tagline">PKR Historic to Present Value Converter</p>
         
         <div class="input-group">
             <label for="amount">Amount (PKR):</label>
@@ -68,9 +85,11 @@
             <h3>Result:</h3>
             <p id="resultText"></p>
         </div>
-        <small><a href="https://github.com/aiktamseel/aaj-ke-hisaab-se?tab=readme-ov-file#readme-ov-file">See Technical Note</a></small>
+        <small><a target="_blank" href="https://github.com/aiktamseel/aaj-ke-hisaab-se?tab=readme-ov-file#readme-ov-file">See Technical Note</a></small>
     </div>
-
+    <footer>
+        <p>Made with 🤍 in <img style="height: 1em; vertical-align:middle;" src="pk.webp" alt="Pakistan"/></p>
+    </footer>
 
 
     <script>
@@ -179,7 +198,7 @@
             
             const resultText = document.getElementById('resultText');
             resultText.innerHTML = 
-                `Rs. ${Math.round(amount)} in ${year} ≈ <strong>Rs. ${Math.round(presentValue)}</strong> in 2024<br><br>` +
+                `Rs. ${Math.round(amount).toLocaleString()} in ${year} ≈ <strong>Rs. ${Math.round(presentValue).toLocaleString()}</strong> in 2024<br><br>` +
                 `(Conversion factor: ${conversionFactor.toFixed(2)})`;
         }
 
