@@ -1,10 +1,14 @@
-# PKR Historical to Present Value Converter (آج کے حساب سے)
-This simple calculator estimates how much a past amount of Pakistani Rupees would be worth in today's Pakistani rupees in terms of equal purchasing power.
+# PKR Historic to Present Value Converter (آج کے حساب سے)
+This simple calculator estimates how much an amount of Pakistani Rupees from past would be worth in today's Pakistani Rupees in terms of equal purchasing power.
 
-## Estimation Methodology
-Conversion factors are based on historic local Gold-prices.  
+## Methodology
+Conversions are based on historic local Gold-prices (slightly modified).
 
-For estimation of conversion factors, firstly, relative prices of historic Gold-prices with current (average of Oct - Dec 2024) price were calculated i.e `P(2024) / P(t)` . To ensure a declining function, the series was then monotonically smoothed (if `P(t) > P(t-1)`, then `P(t)` was set as `P(t-1)` ), and for every year (t) where `P(t)` or `P(t-1)` was monotonically smoothed, 3-year moving average was used instead i.e. `P(t)` is set as `{P(t-1) + P(t) +P(t+1)}/3` . This smoothed series of relative local gold-prices is used as conversion factor.  
+`Present PKR Value = Historic PKR Amount * Current Gold Price / Historic Gold Price`
 
-Gold price data is sourced from [State Bank of Pakistan, Handbook of Statistics on Pakistan Economy 2020](https://www.sbp.org.pk/departments/stats/PakEconomy_Handbook/Chap-2.9.pdf)
+Data series for yearly average of local Gold-prices published in [SBP Statistical Handbook 2020](https://www.sbp.org.pk/departments/stats/PakEconomy_Handbook/Chap-2.9.pdf) is used. To retain a declining trend, the data series is monotonically smoothed by using values of forward-looking minimum.
+
+`P*(t) = Min[P(t),P(t+1),P(t+2),...,P(t+n)]`
+
+Thus, the effect of fluctuations in gold prices (observed notably in FY59-64 and FY12-15) has been removed.  
 
