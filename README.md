@@ -12,3 +12,4 @@ Data series for yearly average of local Gold-prices published in [SBP Statistica
 
 Thus, the effect of fluctuations in gold prices (observed notably in FY59-64 and FY12-15) has been removed.  
 
+![](plot.png)
