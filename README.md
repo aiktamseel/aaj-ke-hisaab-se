@@ -1,15 +1,9 @@
-# PKR Historic to Present Value Converter (آج کے حساب سے)
-This simple calculator estimates how much an amount of Pakistani Rupees from past would be worth in today's Pakistani Rupees in terms of equal purchasing power of Gold.
+# آج کے حساب سے
+This simple calculator:-
+- Converts a sum of PKR amount from past to equivalent amount today using Consumer Price Index (CPI) data
+- Provides real/inflation-adjusted return on investment using CPI data.
 
-## Methodology
-Conversions are based on historic Gold-prices in Pakistan.
+## Data Source
+CPI data since July 2017 (base year 2015-16) is used as published by Pakistan Bureau of Statistics. Monthly index values prior to that have been rebased to base year 2015-16.
 
-`Present PKR Value = Historic PKR Amount * Current Gold Price / Historic Gold Price`
-
-Data series for yearly average of local Gold-price published in [SBP Statistical Handbook 2020](https://www.sbp.org.pk/departments/stats/PakEconomy_Handbook/Chap-2.9.pdf) is used. To retain an increasing trend of gold price, the data series is monotonically smoothed by using forward-looking minimum values `P*(t)` of gold price, where: 
-
-`P*(t) = Min[P(t),P(t+1),P(t+2),...,P(t+n)]`
-
-Thus, the effect of fluctuations in gold price (observed notably in FY59-64 and FY12-15) has been removed with minimum loss of information from original data.  
-
-![](plot.png)
+Annual index averages prior to 2001 have been taken from [SBP Statistical Handbook 2015](https://web.archive.org/web/20180508120053/http://www.sbp.org.pk/departments/stats/PakEconomy_HandBook/Chap-2.10.pdf) and rebased to 2015-16.

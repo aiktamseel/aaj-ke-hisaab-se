@@ -3,213 +3,348 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aaj Ke Hisaab Se - PKR Historic to Present Value Converter</title>
-    <link rel="icon" href="pk.ico" type="image/x-icon" />
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-            /* Duh, the inner conflict between using clean background and indie-web texture */
-            /* Get one for yourself from textures.neocities.org */
-            background-image: linear-gradient(0deg, rgba(127, 225, 221, 0.2), rgba(127, 225, 221, 0.2)), url(bg.png);
-            background-blend-mode: multiply;
-        }
-        .calculator {
-            background-color: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .input-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-        }
-        input, select {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        .result {
-            margin: 20px 0;
-            padding: 20px;
-            background-color: #f8f9fa;
-            border-radius: 4px;
-        }
-        a {
-            color: gray;
-            text-decoration: none;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
-        h1 {
-            margin-bottom: 0;
-        }
-        #tagline {
-            margin: 10px 0 30px;
-            font-size: large;
-        }
-        footer {
-            text-align: center;
-            color: white;
-        }
-    </style>
+    <title>Aaj Ke Hisaab Se - PK Inflation Adjusted Calculators</title>
 </head>
 <body>
-    <div class="calculator">
-        <h1>Aaj Ke Hisaab Se</h1>
-        <p id="tagline">PKR Historic to Present Value Converter</p>
-        
-        <div class="input-group">
-            <label for="amount">Amount (PKR):</label>
-            <input type="number" id="amount" min="0" step="1" value="1" required>
-        </div>
-        
-        <div class="input-group">
-            <label for="year">Select Year:</label>
-            <select id="year" required>
-                <!-- Years will be populated by JavaScript -->
-            </select>
-        </div>
-        
-        <div id="result" class="result">
-            <h3>Result:</h3>
-            <p id="resultText"></p>
-        </div>
-        <small><a target="_blank" href="https://github.com/aiktamseel/aaj-ke-hisaab-se?tab=readme-ov-file#readme-ov-file">See Technical Note</a></small>
+    <h1>Aaj Ke Hisaab Se</h1>
+    
+    <h2>PKR Historic to Present Value Converter</h2>
+    <div>
+        Mode: 
+        <input type="radio" id="yearly" name="mode" value="yearly" checked>
+        <label for="yearly">Yearly</label>
+        <input type="radio" id="monthly" name="mode" value="monthly">
+        <label for="monthly">Monthly</label>
     </div>
-    <footer>
-        <p>Made with 🤍 in <img style="height: 1em; vertical-align:middle;" src="pk.webp" alt="Pakistan"/></p>
-    </footer>
+    
+    <br>
+    
+    <div style="display: flex; align-items: center; gap: 20px;">
+        <div>
+            Rs. <input type="number" id="leftAmount" value="100">
+            <br>
+            in <select id="leftPeriod"></select>
+        </div>
+        
+        <div>≈</div>
+        
+        <div>
+            Rs. <input type="number" id="rightAmount" value="">
+            <br>
+            in <select id="rightPeriod"></select>
+        </div>
+    </div>
+
+    <div id="technicalDetails" style="margin-top: 30px; padding: 15px; border: 1px solid #ccc;">
+        <div id="detailsContent">
+            <p>Select periods to see calculation details</p>
+        </div>
+    </div>
+
+    <h2>Inflation Adjusted Returns Calculator</h2>
+    <div>
+    <div>
+        Amount Invested: Rs. <input type="number" id="amountInvested" value="1000">
+    </div>
+    
+    <div>
+        Investment Date: <select id="investmentDate"></select>
+    </div>
+    
+    <div>
+        End Date: <select id="endDate"></select>
+    </div>
+    
+    <div>
+        End Value: Rs. <input type="number" id="endValue" value="100000">
+    </div>
+    
+    <div>
+        Income/Dividend (optional): Rs. <input type="number" id="incomeDividend" value="0">
+    </div>
+    
+    <div style="margin-top: 30px; padding: 15px; border: 1px solid #ccc;">
+        <strong>Results:</strong>
+        <table>
+            <tr>
+                <td>Annualized Return:</td>
+                <td id="annualizedReturn">-</td>
+            </tr>
+            <tr>
+                <td>Inflation Adjusted Annualized Return:</td>
+                <td id="inflationAdjustedAnnualized">-</td>
+            </tr>
+            <tr>
+                <td>Absolute Return:</td>
+                <td id="absoluteReturn">-</td>
+            </tr>
+            <tr>
+                <td>Inflation Adjusted Absolute Return:</td>
+                <td id="inflationAdjustedAbsolute">-</td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+
 
 
     <script>
-        // Woah, someone other than me is looking at the source code!
+        let cpiData = null;
+        let currentMode = 'yearly';
 
-        // Data series for yearly average of local Gold-prices (slightly modified by author)
-        // Forward-minimum smoothing was applied such that P*(t) = Min[P(t),P(t+1),P(t+2),...,P(t+n)]
-        // Original data was sourced from SBP Statistical Handbook 2020
-        const historicPrices = {
-            "1952": 74.5897,
-            "1953": 78.0191,
-            "1954": 83.1633,
-            "1955": 89.1647,
-            "1956": 91.7368,
-            "1957": 96.0236,
-            "1958": 99.453,
-            "1959": 106.7405,
-            "1960": 106.7405,
-            "1961": 106.7405,
-            "1962": 106.7405,
-            "1963": 106.7405,
-            "1964": 106.7405,
-            "1965": 106.7405,
-            "1966": 109.3125,
-            "1967": 114.8853,
-            "1968": 119.6008,
-            "1969": 132.8898,
-            "1970": 132.8898,
-            "1971": 142,
-            "1972": 172,
-            "1973": 279,
-            "1974": 434.5,
-            "1975": 495.5,
-            "1976": 495.5,
-            "1977": 495.5,
-            "1978": 594,
-            "1979": 803,
-            "1980": 1450.5,
-            "1981": 1571,
-            "1982": 1571,
-            "1983": 1805.5,
-            "1984": 1805.5,
-            "1985": 1805.5,
-            "1986": 1958.5,
-            "1987": 2552.5,
-            "1988": 2877,
-            "1989": 2877,
-            "1990": 2961,
-            "1991": 3068,
-            "1992": 3131,
-            "1993": 3136,
-            "1994": 3983.5,
-            "1995": 4000.5,
-            "1996": 4493.5,
-            "1997": 4493.5,
-            "1998": 4493.5,
-            "1999": 4981.5,
-            "2000": 4981.5,
-            "2001": 5368,
-            "2002": 5879,
-            "2003": 6388,
-            "2004": 7332.5,
-            "2005": 8227,
-            "2006": 10312,
-            "2007": 12611,
-            "2008": 16665,
-            "2009": 22185.5,
-            "2010": 29587,
-            "2011": 37658,
-            "2012": 40101,
-            "2013": 40101,
-            "2014": 40101,
-            "2015": 40101,
-            "2016": 40101,
-            "2017": 43471,
-            "2018": 46421,
-            "2019": 55071,
-            "2020": 77944
-        };
-        // Average of local daily gold price between 01/10/2024 and 27/12/2024
-        const currentPrice = 237638.75;
-
-        // Populate year dropdown
-        const yearSelect = document.getElementById('year');
-        Object.keys(historicPrices)
-            .sort((a, b) => a - b)
-            .forEach(year => {
-                const option = document.createElement('option');
-                option.value = year;
-                option.textContent = year;
-                yearSelect.appendChild(option);
+        // Load CPI data
+        fetch('pk-cpi.json')
+            .then(response => response.json())
+            .then(data => {
+                cpiData = data;
+                populateDropdowns();
+                populateReturnDropdowns();
+                calculate('left');
+                calculateReturns();
             });
-        yearSelect.value = "1952"; // Set default year
 
-        function calculateValue() {
-            const amount = parseFloat(document.getElementById('amount').value);
-            const year = document.getElementById('year').value;
-            
-            if (isNaN(amount) || amount < 0) {
-                document.getElementById('resultText').innerHTML = 'Please enter a valid amount';
-                return;
+        // Get DOM elements
+        const leftAmount = document.getElementById('leftAmount');
+        const rightAmount = document.getElementById('rightAmount');
+        const leftPeriod = document.getElementById('leftPeriod');
+        const rightPeriod = document.getElementById('rightPeriod');
+        const yearlyRadio = document.getElementById('yearly');
+        const monthlyRadio = document.getElementById('monthly');
+
+        // Mode change listeners
+        yearlyRadio.addEventListener('change', () => {
+            if (yearlyRadio.checked) {
+                currentMode = 'yearly';
+                populateDropdowns();
+                calculate('left');
             }
+        });
 
-            const conversionFactor = currentPrice / historicPrices[year];
-            const presentValue = amount * conversionFactor;
+        monthlyRadio.addEventListener('change', () => {
+            if (monthlyRadio.checked) {
+                currentMode = 'monthly';
+                populateDropdowns();
+                calculate('left');
+            }
+        });
+
+        // Input listeners
+        leftAmount.addEventListener('input', () => calculate('left'));
+        leftPeriod.addEventListener('change', () => calculate('left'));
+        rightAmount.addEventListener('input', () => calculate('right'));
+        rightPeriod.addEventListener('change', () => calculate('right'));
+
+        function populateDropdowns() {
+            if (!cpiData) return;
+
+            const periods = Object.keys(cpiData[currentMode]).sort();
             
-            const resultText = document.getElementById('resultText');
-            resultText.innerHTML = 
-                `Rs. ${Math.round(amount).toLocaleString()} in ${year} ≈ <strong>Rs. ${Math.round(presentValue).toLocaleString()}</strong> in 2024<br><br>` +
-                `(Conversion factor: ${conversionFactor.toFixed(2)})`;
+            // Clear and populate left dropdown
+            leftPeriod.innerHTML = '';
+            rightPeriod.innerHTML = '';
+            
+            periods.forEach(period => {
+                const option1 = document.createElement('option');
+                option1.value = period;
+                option1.textContent = period;
+                leftPeriod.appendChild(option1);
+                
+                const option2 = document.createElement('option');
+                option2.value = period;
+                option2.textContent = period;
+                rightPeriod.appendChild(option2);
+            });
+
+            // Set default selections
+            if (periods.length > 1) {
+                leftPeriod.value = periods[0];
+                rightPeriod.value = periods[periods.length - 1];
+            }
         }
 
-        // Add event listeners for auto-update
-        document.getElementById('amount').addEventListener('input', calculateValue);
-        document.getElementById('year').addEventListener('change', calculateValue);
+        function calculate(source) {
+            if (!cpiData) return;
 
-        // Calculate initial value
-        calculateValue();
+            const leftCPI = cpiData[currentMode][leftPeriod.value];
+            const rightCPI = cpiData[currentMode][rightPeriod.value];
 
-        // Lastly I would like to express my gratitude to Claude for enabling me to pull this off so quickly.
+            if (!leftCPI || !rightCPI) return;
+
+            if (source === 'left') {
+                const leftValue = parseFloat(leftAmount.value) || 0;
+                const rightValue = leftValue * (rightCPI / leftCPI);
+                rightAmount.value = rightValue.toFixed(2);
+            } else {
+                const rightValue = parseFloat(rightAmount.value) || 0;
+                const leftValue = rightValue * (leftCPI / rightCPI);
+                leftAmount.value = leftValue.toFixed(2);
+            }
+
+            updateTechnicalDetails(leftCPI, rightCPI);
+        }
+
+        function updateTechnicalDetails(leftCPI, rightCPI) {
+            const detailsContent = document.getElementById('detailsContent');
+            if (!detailsContent) return;
+            
+            const baseYear = cpiData.metadata.baseYear;
+            const leftPeriodValue = leftPeriod.value;
+            const rightPeriodValue = rightPeriod.value;
+            
+            // Determine which is earlier (t1) and which is later (t2)
+            let t1Period, t2Period, t1CPI, t2CPI;
+            
+            if (currentMode === 'yearly') {
+                if (parseInt(leftPeriodValue) <= parseInt(rightPeriodValue)) {
+                    t1Period = leftPeriodValue;
+                    t2Period = rightPeriodValue;
+                    t1CPI = leftCPI;
+                    t2CPI = rightCPI;
+                } else {
+                    t1Period = rightPeriodValue;
+                    t2Period = leftPeriodValue;
+                    t1CPI = rightCPI;
+                    t2CPI = leftCPI;
+                }
+            } else {
+                // For monthly data, compare as dates
+                const leftDate = new Date(leftPeriodValue + '-01');
+                const rightDate = new Date(rightPeriodValue + '-01');
+                
+                if (leftDate <= rightDate) {
+                    t1Period = leftPeriodValue;
+                    t2Period = rightPeriodValue;
+                    t1CPI = leftCPI;
+                    t2CPI = rightCPI;
+                } else {
+                    t1Period = rightPeriodValue;
+                    t2Period = leftPeriodValue;
+                    t1CPI = rightCPI;
+                    t2CPI = leftCPI;
+                }
+            }
+            
+            const absoluteChange = ((t2CPI - t1CPI) / t1CPI * 100).toFixed(2);
+            
+            let annualizedChange = 0;
+            if (currentMode === 'yearly') {
+                const years = parseInt(t2Period) - parseInt(t1Period);
+                if (years > 0) {
+                    annualizedChange = (Math.pow(t2CPI / t1CPI, 1 / years) - 1) * 100;
+                    annualizedChange = annualizedChange.toFixed(2);
+                }
+            } else {
+                // For monthly data, calculate years between periods
+                const [year1, month1] = t1Period.split('-').map(Number);
+                const [year2, month2] = t2Period.split('-').map(Number);
+                const months = (year2 - year1) * 12 + (month2 - month1);
+                const years = months / 12;
+                if (years > 0) {
+                    annualizedChange = (Math.pow(t2CPI / t1CPI, 1 / years) - 1) * 100;
+                    annualizedChange = annualizedChange.toFixed(2);
+                }
+            }
+
+            detailsContent.innerHTML = `
+                <p><strong>Base Year:</strong> ${baseYear}</p>
+                <p><strong>T1 CPI (${t1Period}):</strong> ${t1CPI}</p>
+                <p><strong>T2 CPI (${t2Period}):</strong> ${t2CPI}</p>
+                <p><strong>Absolute Percentage Change:</strong> ${absoluteChange}%</p>
+                <p><strong>Annualized Percentage Change:</strong> ${annualizedChange}%</p>
+                <p><strong>Formula:</strong> Adjusted Amount = Original Amount × (T2 CPI / T1 CPI)</p>
+            `;
+        }
+
+        // Get return calculator elements
+        const amountInvested = document.getElementById('amountInvested');
+        const investmentDate = document.getElementById('investmentDate');
+        const endDate = document.getElementById('endDate');
+        const endValue = document.getElementById('endValue');
+        const incomeDividend = document.getElementById('incomeDividend');
+
+        // Add event listeners for return calculator
+        amountInvested.addEventListener('input', calculateReturns);
+        investmentDate.addEventListener('change', calculateReturns);
+        endDate.addEventListener('change', calculateReturns);
+        endValue.addEventListener('input', calculateReturns);
+        incomeDividend.addEventListener('input', calculateReturns);
+
+        function populateReturnDropdowns() {
+            if (!cpiData) return;
+            
+            const periods = Object.keys(cpiData.monthly).sort();
+            
+            // Clear and populate dropdowns
+            investmentDate.innerHTML = '';
+            endDate.innerHTML = '';
+            
+            periods.forEach(period => {
+                const option1 = document.createElement('option');
+                option1.value = period;
+                option1.textContent = period;
+                investmentDate.appendChild(option1);
+                
+                const option2 = document.createElement('option');
+                option2.value = period;
+                option2.textContent = period;
+                endDate.appendChild(option2);
+            });
+            
+            // Set default selections
+            if (periods.length > 1) {
+                investmentDate.value = periods[0];
+                endDate.value = periods[periods.length - 1];
+            }
+        }
+
+        function calculateReturns() {
+            if (!cpiData) return;
+            
+            const V0 = parseFloat(amountInvested.value) || 0;
+            const VT = parseFloat(endValue.value) || 0;
+            const income = parseFloat(incomeDividend.value) || 0;
+            
+            const startPeriod = investmentDate.value;
+            const endPeriod = endDate.value;
+            
+            const CPI0 = cpiData.monthly[startPeriod];
+            const CPIT = cpiData.monthly[endPeriod];
+            
+            if (!CPI0 || !CPIT || V0 === 0) {
+                document.getElementById('absoluteReturn').textContent = '-';
+                document.getElementById('inflationAdjustedAbsolute').textContent = '-';
+                document.getElementById('annualizedReturn').textContent = '-';
+                document.getElementById('inflationAdjustedAnnualized').textContent = '-';
+                return;
+            }
+            
+            // Calculate time period in months (inclusive of both ends)
+            const [startYear, startMonth] = startPeriod.split('-').map(Number);
+            const [endYear, endMonth] = endPeriod.split('-').map(Number);
+            const T = (endYear - startYear) * 12 + (endMonth - startMonth) + 1;
+            
+            // Total final value including income/dividend
+            const totalFinalValue = VT + income;
+            
+            // Absolute Return = VT/V0 - 1
+            const absoluteReturn = (totalFinalValue / V0) - 1;
+            
+            // Annualized Return = (VT/V0)^(12/T) - 1
+            const annualizedReturn = T > 0 ? Math.pow(totalFinalValue / V0, 12 / T) - 1 : 0;
+            
+            // Inflation Adjusted Absolute Return = (VT/V0)/(CPIT/CPI0) - 1
+            const inflationAdjustedAbsolute = (totalFinalValue / V0) / (CPIT / CPI0) - 1;
+            
+            // Inflation Adjusted Annualized Return = ((VT/V0)/(CPIT/CPI0))^(12/T) - 1
+            const inflationAdjustedAnnualized = T > 0 ? Math.pow((totalFinalValue / V0) / (CPIT / CPI0), 12 / T) - 1 : 0;
+            
+            // Display results
+            document.getElementById('absoluteReturn').textContent = (absoluteReturn * 100).toFixed(2) + '%';
+            document.getElementById('inflationAdjustedAbsolute').textContent = (inflationAdjustedAbsolute * 100).toFixed(2) + '%';
+            document.getElementById('annualizedReturn').textContent = (annualizedReturn * 100).toFixed(2) + '%';
+            document.getElementById('inflationAdjustedAnnualized').textContent = (inflationAdjustedAnnualized * 100).toFixed(2) + '%';
+        }
     </script>
 </body>
 </html>
