@@ -55,13 +55,38 @@ class CPIUpdater:
             if not table:
                 raise ValueError("Could not find the CPI data table")
             
+            # Find header row to identify column positions
+            header_row = table.find('thead')
+            if not header_row:
+                raise ValueError("Could not find table header")
+            
+            header_cells = header_row.find_all('th')
+            column_mapping = {}
+            
+            for i, cell in enumerate(header_cells):
+                header_text = cell.get_text(strip=True).lower()
+                if 'last' in header_text:
+                    column_mapping['last'] = i
+                elif 'previous' in header_text:
+                    column_mapping['previous'] = i
+                elif 'reference' in header_text:
+                    column_mapping['reference'] = i
+            
+            # Verify we found all required columns
+            required_columns = ['last', 'previous', 'reference']
+            missing_columns = [col for col in required_columns if col not in column_mapping]
+            if missing_columns:
+                raise ValueError(f"Could not find columns: {missing_columns}")
+            
+            print(f"Column mapping: {column_mapping}")
+            
             # Find the row containing "Consumer Price Index CPI"
             rows = table.find_all('tr')
             cpi_row = None
             
             for row in rows:
                 cells = row.find_all('td')
-                if cells and len(cells) >= 5:
+                if cells and len(cells) > max(column_mapping.values()):
                     first_cell = cells[0].get_text(strip=True)
                     if "Consumer Price Index CPI" in first_cell:
                         cpi_row = row
@@ -70,11 +95,11 @@ class CPIUpdater:
             if not cpi_row:
                 raise ValueError("Could not find Consumer Price Index CPI row")
             
-            # Extract data from the row
+            # Extract data using the identified column positions
             cells = cpi_row.find_all('td')
-            last_value = float(cells[1].get_text(strip=True))
-            previous_value = float(cells[2].get_text(strip=True))
-            reference_date = cells[4].get_text(strip=True)
+            last_value = float(cells[column_mapping['last']].get_text(strip=True))
+            previous_value = float(cells[column_mapping['previous']].get_text(strip=True))
+            reference_date = cells[column_mapping['reference']].get_text(strip=True)
             
             return {
                 'last_value': last_value,
@@ -120,8 +145,26 @@ class CPIUpdater:
             print(f"Error parsing reference date '{reference_date}': {e}")
             sys.exit(1)
     
+    def validate_cpi_values(self, current_value, previous_value):
+        """Validate that CPI values are reasonable"""
+        # Check if current value dropped by more than 100 points from previous month
+        if current_value < previous_value - 100:
+            raise ValueError(
+                f"CPI value dropped by {previous_value - current_value:.2f} points "
+                f"(from {previous_value} to {current_value}). This seems unrealistic and likely indicates an error."
+            )
+        
+        # Additional validation: check if values are positive
+        if current_value <= 0 or previous_value <= 0:
+            raise ValueError(f"CPI values must be positive. Got current: {current_value}, previous: {previous_value}")
+        
+        print(f"CPI values validated: Previous={previous_value}, Current={current_value}")
+    
     def validate_and_update_monthly_data(self, data, current_month, prev_month, current_value, previous_value):
         """Validate and update monthly CPI data"""
+        # First validate the CPI values for reasonableness
+        self.validate_cpi_values(current_value, previous_value)
+        
         monthly_data = data.get('monthly', {})
         
         # Check if previous month data exists and validate
@@ -148,15 +191,46 @@ class CPIUpdater:
         data['monthly'] = monthly_data
         return data
     
-    def calculate_fiscal_year_average(self, data, current_month):
-        """Calculate fiscal year average if current month is June"""
+    def get_fiscal_year_for_month(self, year, month):
+        """Get the fiscal year for a given month. 
+        Fiscal year runs from July to June, so:
+        - July 2024 to June 2025 is fiscal year 2025
+        - January 2025 is part of fiscal year 2025
+        - July 2025 is part of fiscal year 2026
+        """
+        if month >= 7:  # July onwards belongs to next fiscal year
+            return year + 1
+        else:  # January to June belongs to current fiscal year
+            return year
+    
+    def calculate_fiscal_year_average_if_needed(self, data, current_month):
+        """Calculate fiscal year average if the last completed fiscal year data is missing"""
         year, month = map(int, current_month.split('-'))
+        yearly_data = data.get('yearly', {})
         
-        if month != 6:  # Not June
+        # Determine which fiscal year we should check for completion
+        if month >= 7:  # July onwards - previous fiscal year is complete
+            # For July 2025 onwards, fiscal year 2025 (July 2024-June 2025) is complete
+            fiscal_year_to_check = self.get_fiscal_year_for_month(year, month) - 1
+        else:  # Before July - fiscal year from 2 years ago should be complete
+            # For Jan-June 2025, fiscal year 2024 (July 2023-June 2024) is complete
+            fiscal_year_to_check = self.get_fiscal_year_for_month(year, month) - 2
+        
+        print(f"Checking if fiscal year {fiscal_year_to_check} data exists...")
+        
+        # Check if this fiscal year's data already exists
+        if str(fiscal_year_to_check) in yearly_data:
+            print(f"Fiscal year {fiscal_year_to_check} data already exists: {yearly_data[str(fiscal_year_to_check)]}")
             return data
         
-        print(f"Current month is June {year}. Calculating fiscal year average...")
+        print(f"Fiscal year {fiscal_year_to_check} data missing. Calculating...")
         
+        # Calculate the fiscal year average
+        data = self.calculate_fiscal_year_average(data, fiscal_year_to_check)
+        return data
+    
+    def calculate_fiscal_year_average(self, data, fiscal_year):
+        """Calculate fiscal year average for a specific fiscal year"""
         monthly_data = data.get('monthly', {})
         
         # Fiscal year: July (year-1) to June (year)
@@ -164,12 +238,12 @@ class CPIUpdater:
         
         # July to December of previous year
         for m in range(7, 13):
-            month_key = f"{year-1}-{m:02d}"
+            month_key = f"{fiscal_year-1}-{m:02d}"
             fiscal_year_months.append(month_key)
         
-        # January to June of current year
+        # January to June of fiscal year
         for m in range(1, 7):
-            month_key = f"{year}-{m:02d}"
+            month_key = f"{fiscal_year}-{m:02d}"
             fiscal_year_months.append(month_key)
         
         # Collect values for fiscal year
@@ -184,7 +258,11 @@ class CPIUpdater:
         
         if missing_months:
             print(f"Warning: Missing data for months: {missing_months}")
-            print("Cannot calculate fiscal year average. Skipping yearly update.")
+            print(f"Cannot calculate fiscal year {fiscal_year} average. Skipping yearly update.")
+            return data
+        
+        if len(fiscal_year_values) != 12:
+            print(f"Warning: Expected 12 months of data but found {len(fiscal_year_values)}. Skipping yearly update.")
             return data
         
         # Calculate average
@@ -192,11 +270,11 @@ class CPIUpdater:
         
         # Update yearly data
         yearly_data = data.get('yearly', {})
-        yearly_data[str(year)] = round(fiscal_year_average, 4)
+        yearly_data[str(fiscal_year)] = round(fiscal_year_average, 4)
         data['yearly'] = yearly_data
         
-        print(f"Added fiscal year {year} average: {fiscal_year_average:.4f}")
-        print(f"Calculated from {len(fiscal_year_values)} months: July {year-1} to June {year}")
+        print(f"Added fiscal year {fiscal_year} average: {fiscal_year_average:.4f}")
+        print(f"Calculated from {len(fiscal_year_values)} months: July {fiscal_year-1} to June {fiscal_year}")
         
         return data
     
@@ -236,8 +314,8 @@ class CPIUpdater:
             scraped_data['last_value'], scraped_data['previous_value']
         )
         
-        # Calculate fiscal year average if current month is June
-        data = self.calculate_fiscal_year_average(data, current_month)
+        # Calculate fiscal year average if needed (not just for June)
+        data = self.calculate_fiscal_year_average_if_needed(data, current_month)
         
         # Update metadata
         data = self.update_metadata(data)
