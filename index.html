@@ -3,46 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aaj Ke Hisaab Se - PK Inflation Adjusted Calculators</title>
+    <title>Aaj Ke Hisaab Se - Pakistan Inflation Adjustment Calculators</title>
     
     <!-- SEO Meta Tags -->
-    <meta name="description" content="Calculate inflation-adjusted values for Pakistani Rupee (PKR) with easy-to-use calculators. Convert historical amounts to present value and calculate inflation-adjusted returns.">
+    <meta name="description" content="Calculate inflation-adjusted returns and convert past PKR values to today’s using Pakistan CPI data.">
     <meta name="keywords" content="inflation, consumer price index, Pakistan inflation, rupee value, inflation adjusted returns, historical value calculator">
     <meta name="author" content="Tamseel Ahmad">
     <meta name="robots" content="index, follow">
     
     <!-- Open Graph Meta Tags -->
     <meta property="og:title" content="Aaj Ke Hisaab Se - PK Inflation Adjusted Calculators">
-    <meta property="og:description" content="Calculate inflation-adjusted values for Pakistani Rupee (PKR) with easy-to-use calculators.">
+    <meta property="og:description" content="Calculate inflation-adjusted returns and convert past PKR values to today’s using Pakistan CPI data.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://pkr.tamseel.pk">
+    <meta property="og:image" content="https://i.lede.me?title=Aaj+Ke+Hisaab+Se&lede=Calculate+inflation-adjusted+investment+returns+and+convert+past+PKR+values+to+present+using+Pakistan%27s+CPI+data&kicker=Web+Calculator&author=by+Tamseel">
     
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Aaj Ke Hisaab Se - PK Inflation Adjusted Calculators">
-    <meta name="twitter:description" content="Calculate inflation-adjusted values for Pakistani Rupee (PKR) with easy-to-use calculators.">
-    
+    <meta name="twitter:description" content="Calculate inflation-adjusted returns and convert past PKR values to today’s using Pakistan CPI data.">
+    <meta name="twitter:image" content="https://i.lede.me?title=Aaj+Ke+Hisaab+Se&lede=Calculate+inflation-adjusted+investment+returns+and+convert+past+PKR+values+to+present+using+Pakistan%27s+CPI+data&kicker=Web+Calculator&author=by+Tamseel">
+
     <!-- Canonical URL -->
     <link rel="canonical" href="https://pkr.tamseel.pk">
 
     <style>
         body {text-align: center;}
-        .info {margin-top: 30px; padding: 15px; border: 1px solid #ccc; display:inline-block;}
-        input[type="number"] {width: 80px;}
         select {width: 90px;}
+        input[type="number"] {width: 80px;}
         table { border-spacing: 20px 0; margin:auto}
-        #historicInput { display: flex; align-items: center; gap: 20px; width:fit-content; margin:0 auto;}
+        .info {margin-top: 30px; padding: 15px; border: 1px solid #ccc; display:inline-block;}
+        #equalsign {font-size: x-large; font-weight: 700;}
+        #historicInput {display: flex; align-items: center; gap: 20px; width:fit-content; margin:0 auto;}
     </style>
     
 </head>
 <body>
     <h1>Aaj Ke Hisaab Se</h1>
     
-    <h2>Inflation Adjusted Returns Calculator</h2>
+    <h2>Inflation Adjusted Return Calculator for Pakistan</h2>
     <div>
         <table>
             <tr>
-                <td>Amount Invested: </td>
+                <td>Initial Investment: </td>
                 <td>Rs. <input type="number" id="amountInvested" value="1000"></td>
             </tr>
             <tr>
@@ -54,7 +57,7 @@
                 <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<select id="endDate"></select></td>
             </tr>
             <tr>
-                <td>End Value: </td>
+                <td>Final Value: </td>
                 <td>Rs. <input type="number" id="endValue" value="100000"></td>
             </tr>
             <tr>
@@ -107,7 +110,7 @@
             &nbsp;in &nbsp;<select id="leftPeriod"></select>
         </div>
         
-        <div style="font-size: x-large; font-weight: 700;">≈</div>
+        <div id="equalsign">≈</div>
         
         <div>
             Rs. <input type="number" id="rightAmount" value="">
@@ -415,7 +418,7 @@
             const inflationAdjustedAnnualized = T > 0 ? Math.pow((totalFinalValue / V0) / (CPIT / CPI0), 12 / T) - 1 : 0;
             
             // Display results
-            document.getElementById('investmentPeriod').textContent = T + ' months (' + (T/12).toFixed(1) + ' years)';
+            document.getElementById('investmentPeriod').textContent = T + ' months (' + (T/12).toFixed(1) + '\u00A0years)';
             document.getElementById('absoluteReturn').textContent = Math.round(absoluteReturn * 100) + '%';
             document.getElementById('inflationAdjustedAbsolute').textContent = Math.round(inflationAdjustedAbsolute * 100) + '%';
             document.getElementById('annualizedReturn').textContent = (annualizedReturn * 100).toFixed(2) + '%';
