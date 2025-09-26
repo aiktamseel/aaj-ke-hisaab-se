@@ -1,0 +1,62 @@
+name: Update CPI Data
+
+on:
+  schedule:
+    # Run on the 5th of every month at 10:00 AM UTC
+    - cron: '0 10 5 * *'
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  update-cpi-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run CPI updater script
+      run: |
+        python cpi_updater.py
+
+    - name: Check for changes
+      id: verify-changed-files
+      run: |
+        if git diff --quiet && git diff --staged --quiet; then
+          echo "changed=false" >> $GITHUB_OUTPUT
+        else
+          echo "changed=true" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Commit and push changes
+      if: steps.verify-changed-files.outputs.changed == 'true'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add pk-cpi.json
+        git commit -m "Update CPI data for $(date +'%B %Y')"
+        git push
+
+    - name: Create issue if script fails
+      if: failure()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: 'CPI Data Update Failed - ' + new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+            body: 'The automated CPI data update failed on ' + new Date().toDateString() + '. Please check the workflow logs and update manually if needed.\n\n' +
+                  'Workflow run: ' + context.payload.repository.html_url + '/actions/runs/' + context.runId
+          })
