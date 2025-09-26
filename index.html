@@ -13,7 +13,7 @@
     
     <!-- Open Graph Meta Tags -->
     <meta property="og:title" content="Aaj Ke Hisaab Se - PK Inflation Adjusted Calculators">
-    <meta property="og:description" content="Calculate inflation-adjusted values for Pakistani Rupee (PKR) with our easy-to-use calculators.">
+    <meta property="og:description" content="Calculate inflation-adjusted values for Pakistani Rupee (PKR) with easy-to-use calculators.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://pkr.tamseel.pk">
     
@@ -24,10 +24,71 @@
     
     <!-- Canonical URL -->
     <link rel="canonical" href="https://pkr.tamseel.pk">
+
+    <style>
+        body {text-align: center;}
+        .info {margin-top: 30px; padding: 15px; border: 1px solid #ccc; display:inline-block;}
+        input[type="number"] {width: 80px;}
+        select {width: 90px;}
+        table { border-spacing: 20px 0; margin:auto}
+        #historicInput { display: flex; align-items: center; gap: 20px; width:fit-content; margin:0 auto;}
+    </style>
+    
 </head>
 <body>
     <h1>Aaj Ke Hisaab Se</h1>
     
+    <h2>Inflation Adjusted Returns Calculator</h2>
+    <div>
+        <table>
+            <tr>
+                <td>Amount Invested: </td>
+                <td>Rs. <input type="number" id="amountInvested" value="1000"></td>
+            </tr>
+            <tr>
+                <td>Investment Date: </td>
+                <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<select id="investmentDate"></select></td>
+            </tr>
+            <tr>
+                <td>End Date: </td>
+                <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<select id="endDate"></select></td>
+            </tr>
+            <tr>
+                <td>End Value: </td>
+                <td>Rs. <input type="number" id="endValue" value="100000"></td>
+            </tr>
+            <tr>
+                <td>Income/Dividend: </td>
+                <td>Rs. <input type="number" id="incomeDividend" value="0"></td>
+            </tr>
+            <tr>
+                <td>Period: </td>
+                <td id="investmentPeriod">-</td>
+            </tr>
+        </table>
+
+        
+        <div class="info">
+            <table>
+                <tr>
+                    <th>Return</th>
+                    <th>Nominal</th>
+                    <th>Inflation Adjusted</th>
+                </tr>
+                <tr>
+                    <td>Annualized</td>
+                    <td id="annualizedReturn">-</td>
+                    <td id="inflationAdjustedAnnualized">-</td>
+                </tr>
+                <tr>
+                    <td>Absolute</td>
+                    <td id="absoluteReturn">-</td>
+                    <td id="inflationAdjustedAbsolute">-</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
     <h2>PKR Historic to Present Value Converter</h2>
     <div>
         Mode: 
@@ -39,72 +100,50 @@
     
     <br>
     
-    <div style="display: flex; align-items: center; gap: 20px;">
+    <div id="historicInput">
         <div>
             Rs. <input type="number" id="leftAmount" value="100">
             <br>
-            in <select id="leftPeriod"></select>
+            &nbsp;in &nbsp;<select id="leftPeriod"></select>
         </div>
         
-        <div>≈</div>
+        <div style="font-size: x-large; font-weight: 700;">≈</div>
         
         <div>
             Rs. <input type="number" id="rightAmount" value="">
             <br>
-            in <select id="rightPeriod"></select>
+            &nbsp;in &nbsp;<select id="rightPeriod"></select>
         </div>
     </div>
 
-    <div id="technicalDetails" style="margin-top: 30px; padding: 15px; border: 1px solid #ccc;">
-        <div id="detailsContent">
-            <p>Select periods to see calculation details</p>
-        </div>
-    </div>
-
-    <h2>Inflation Adjusted Returns Calculator</h2>
-    <div>
-    <div>
-        Amount Invested: Rs. <input type="number" id="amountInvested" value="1000">
-    </div>
-    
-    <div>
-        Investment Date: <select id="investmentDate"></select>
-    </div>
-    
-    <div>
-        End Date: <select id="endDate"></select>
-    </div>
-    
-    <div>
-        End Value: Rs. <input type="number" id="endValue" value="100000">
-    </div>
-    
-    <div>
-        Income/Dividend (optional): Rs. <input type="number" id="incomeDividend" value="0">
-    </div>
-    
-    <div style="margin-top: 30px; padding: 15px; border: 1px solid #ccc;">
-        <strong>Results:</strong>
+    <div class="info">
         <table>
             <tr>
-                <td>Annualized Return:</td>
-                <td id="annualizedReturn">-</td>
+                <td>Base Year: </td>
+                <td id="baseYear">-</td>
             </tr>
             <tr>
-                <td>Inflation Adjusted Annualized Return:</td>
-                <td id="inflationAdjustedAnnualized">-</td>
+                <td>CPI (<span id="t1Period"></span>): </td>
+                <td id ="t1CPI">-</td>
             </tr>
             <tr>
-                <td>Absolute Return:</td>
-                <td id="absoluteReturn">-</td>
+                <td>CPI (<span id="t2Period"></span>): </td>
+                <td id="t2CPI">-</td>
             </tr>
             <tr>
-                <td>Inflation Adjusted Absolute Return:</td>
-                <td id="inflationAdjustedAbsolute">-</td>
+                <td>Absolute %∆: </td>
+                <td id="absoluteChange">-</td>
+            </tr>
+            <tr>
+                <td>Annualized %∆: </td>
+                <td id="annualizedChange">-</td>
             </tr>
         </table>
+        <p>Formula: Adjusted Amount = Original Amount × (T2 CPI / T1 CPI)</p>
     </div>
-</div>
+
+    <br><br><br><br><br>
+    <small>Last Updated: <span id="lastUpdated"></span> | For queries, contact at tamseel.dev@gmail.com</small>
 
 
 
@@ -181,6 +220,10 @@
                 leftPeriod.value = periods[0];
                 rightPeriod.value = periods[periods.length - 1];
             }
+
+            // Last Updated
+            document.getElementById('lastUpdated').textContent = cpiData?.metadata?.lastUpdated ?? null;
+;
         }
 
         function calculate(source) {
@@ -205,8 +248,6 @@
         }
 
         function updateTechnicalDetails(leftCPI, rightCPI) {
-            const detailsContent = document.getElementById('detailsContent');
-            if (!detailsContent) return;
             
             const baseYear = cpiData.metadata.baseYear;
             const leftPeriodValue = leftPeriod.value;
@@ -244,8 +285,18 @@
                     t2CPI = leftCPI;
                 }
             }
+
+            if (!t1CPI || !t2CPI) {
+                document.getElementById('baseYear').textContent = '-';
+                document.getElementById('t1Period').textContent = '-';
+                document.getElementById('t2Period').textContent = '-';
+                document.getElementById('t1CPI').textContent = '-';
+                document.getElementById('t2CPI').textContent = '-';
+                document.getElementById('absoluteChange').textContent = '-';
+                document.getElementById('annualizedChange').textContent = '-';
+            }
             
-            const absoluteChange = ((t2CPI - t1CPI) / t1CPI * 100).toFixed(2);
+            const absoluteChange = Math.round((t2CPI - t1CPI) / t1CPI * 100);
             
             let annualizedChange = 0;
             if (currentMode === 'yearly') {
@@ -266,14 +317,17 @@
                 }
             }
 
-            detailsContent.innerHTML = `
-                <p><strong>Base Year:</strong> ${baseYear}</p>
-                <p><strong>T1 CPI (${t1Period}):</strong> ${t1CPI}</p>
-                <p><strong>T2 CPI (${t2Period}):</strong> ${t2CPI}</p>
-                <p><strong>Absolute Percentage Change:</strong> ${absoluteChange}%</p>
-                <p><strong>Annualized Percentage Change:</strong> ${annualizedChange}%</p>
-                <p><strong>Formula:</strong> Adjusted Amount = Original Amount × (T2 CPI / T1 CPI)</p>
-            `;
+            
+
+            //Update Values
+            document.getElementById('baseYear').textContent = baseYear;
+            document.getElementById('t1Period').textContent = t1Period;
+            document.getElementById('t2Period').textContent = t2Period;
+            document.getElementById('t1CPI').textContent = t1CPI;
+            document.getElementById('t2CPI').textContent = t2CPI;
+            document.getElementById('absoluteChange').textContent = absoluteChange + '%';
+            document.getElementById('annualizedChange').textContent = annualizedChange + '%';
+
         }
 
         // Get return calculator elements
@@ -332,6 +386,7 @@
             const CPIT = cpiData.monthly[endPeriod];
             
             if (!CPI0 || !CPIT || V0 === 0) {
+                document.getElementById('investmentPeriod').textContent = '-';
                 document.getElementById('absoluteReturn').textContent = '-';
                 document.getElementById('inflationAdjustedAbsolute').textContent = '-';
                 document.getElementById('annualizedReturn').textContent = '-';
@@ -360,8 +415,9 @@
             const inflationAdjustedAnnualized = T > 0 ? Math.pow((totalFinalValue / V0) / (CPIT / CPI0), 12 / T) - 1 : 0;
             
             // Display results
-            document.getElementById('absoluteReturn').textContent = (absoluteReturn * 100).toFixed(2) + '%';
-            document.getElementById('inflationAdjustedAbsolute').textContent = (inflationAdjustedAbsolute * 100).toFixed(2) + '%';
+            document.getElementById('investmentPeriod').textContent = T + ' months (' + (T/12).toFixed(1) + ' years)';
+            document.getElementById('absoluteReturn').textContent = Math.round(absoluteReturn * 100) + '%';
+            document.getElementById('inflationAdjustedAbsolute').textContent = Math.round(inflationAdjustedAbsolute * 100) + '%';
             document.getElementById('annualizedReturn').textContent = (annualizedReturn * 100).toFixed(2) + '%';
             document.getElementById('inflationAdjustedAnnualized').textContent = (inflationAdjustedAnnualized * 100).toFixed(2) + '%';
         }
