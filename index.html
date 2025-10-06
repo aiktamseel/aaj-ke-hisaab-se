@@ -31,9 +31,10 @@
         body {text-align: center;}
         select {width: 88px;}
         input[type="number"] {width: 80px;}
-        table { border-spacing: 20px 3px; margin:auto}
+        table { border-spacing: 20px 3px;}
         hr {max-width: 300px; margin: 40px auto;}
         math {math-style: normal;}
+        .centertbl {margin:auto}
         .info {margin-top: 30px; padding: 15px; border: 1px solid #ccc; display:inline-block;}
         #equalsign {font-size: x-large; font-weight: 700;}
         #historicInput {display: flex; align-items: center; gap: 20px; width:fit-content; margin:0 auto;}
@@ -47,7 +48,7 @@
     
     <h2>Inflation Adjusted Return Calculator for Pakistan</h2>
     <div>
-        <table>
+        <table class="centertbl">
             <tr>
                 <td>Initial Investment: </td>
                 <td>Rs. <input type="number" id="amountInvested" value="100"></td>
@@ -170,7 +171,7 @@
 <p>By replacing V<sub>0</sub> with its equivalent value for time T, we can hold purchasing power of Rupee constant, and thus eliminate the effect of inflation.</p>
 
 <!-- Table for Returns -->
-<table id="formulae">
+<table  class="centertbl" id="formulae">
   <tr>
     <td>Return</td>
     <td>Nominal</td>
