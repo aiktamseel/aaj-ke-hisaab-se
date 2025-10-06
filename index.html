@@ -32,6 +32,7 @@
         select {width: 90px;}
         input[type="number"] {width: 80px;}
         table { border-spacing: 20px 0; margin:auto}
+        hr {max-width: 300px;}
         .info {margin-top: 30px; padding: 15px; border: 1px solid #ccc; display:inline-block;}
         #equalsign {font-size: x-large; font-weight: 700;}
         #historicInput {display: flex; align-items: center; gap: 20px; width:fit-content; margin:0 auto;}
@@ -39,14 +40,14 @@
     
 </head>
 <body>
-    <h1>Aaj Ke Hisaab Se</h1>
+    <h1>Aaj Ke Hisaab Se</h1><br>
     
     <h2>Inflation Adjusted Return Calculator for Pakistan</h2>
     <div>
         <table>
             <tr>
                 <td>Initial Investment: </td>
-                <td>Rs. <input type="number" id="amountInvested" value="1000"></td>
+                <td>Rs. <input type="number" id="amountInvested" value="100"></td>
             </tr>
             <tr>
                 <td>Investment Date: </td>
@@ -58,7 +59,7 @@
             </tr>
             <tr>
                 <td>Final Value: </td>
-                <td>Rs. <input type="number" id="endValue" value="100000"></td>
+                <td>Rs. <input type="number" id="endValue" value="10000"></td>
             </tr>
             <tr>
                 <td>Income/Dividend: </td>
@@ -92,11 +93,13 @@
         </div>
     </div>
 
+    <br><br><hr><br>
+
     <h2>PKR Historic to Present Value Converter</h2>
     <div>
         Mode: 
         <input type="radio" id="yearly" name="mode" value="yearly" checked>
-        <label for="yearly">Yearly</label>
+        <label for="yearly">Yearly (FY)</label>
         <input type="radio" id="monthly" name="mode" value="monthly">
         <label for="monthly">Monthly</label>
     </div>
@@ -154,6 +157,7 @@
     <script>
         let cpiData = null;
         let currentMode = 'yearly';
+        const fmt = v => v.toFixed(Math.abs(v) < 10 ? 2 : Math.abs(v) < 100 ? 1 : 0);
 
         // Load CPI data
         fetch('pk-cpi.json')
@@ -299,7 +303,7 @@
                 document.getElementById('annualizedChange').textContent = '-';
             }
             
-            const absoluteChange = Math.round((t2CPI - t1CPI) / t1CPI * 100);
+            const absoluteChange = fmt((t2CPI - t1CPI) / t1CPI * 100);
             
             let annualizedChange = 0;
             if (currentMode === 'yearly') {
@@ -419,8 +423,8 @@
             
             // Display results
             document.getElementById('investmentPeriod').textContent = T + ' months (' + (T/12).toFixed(1) + '\u00A0years)';
-            document.getElementById('absoluteReturn').textContent = Math.round(absoluteReturn * 100) + '%';
-            document.getElementById('inflationAdjustedAbsolute').textContent = Math.round(inflationAdjustedAbsolute * 100) + '%';
+            document.getElementById('absoluteReturn').textContent = fmt(absoluteReturn * 100) + '%';
+            document.getElementById('inflationAdjustedAbsolute').textContent = fmt(inflationAdjustedAbsolute * 100) + '%';
             document.getElementById('annualizedReturn').textContent = (annualizedReturn * 100).toFixed(2) + '%';
             document.getElementById('inflationAdjustedAnnualized').textContent = (inflationAdjustedAnnualized * 100).toFixed(2) + '%';
         }
