@@ -100,16 +100,15 @@
 
     <h2>PKR Historic to Present Value Converter</h2>
     <div>
+      <div>
         Mode: 
         <input type="radio" id="yearly" name="mode" value="yearly" checked>
         <label for="yearly">Yearly (FY)</label>
         <input type="radio" id="monthly" name="mode" value="monthly">
         <label for="monthly">Monthly</label>
-    </div>
-    
-    <br>
-    
-    <div id="historicInput">
+      </div>
+      <br>
+      <div id="historicInput">
         <div>
             Rs. <input type="number" id="leftAmount" value="100">
             <br>
@@ -123,33 +122,32 @@
             <br>
             &nbsp;in &nbsp;<select id="rightPeriod"></select>
         </div>
+      </div>
+      <div class="info">
+          <table>
+              <tr>
+                  <td>Base&nbsp;Year: </td>
+                  <td id="baseYear">-</td>
+              </tr>
+              <tr>
+                  <td>CPI&nbsp;(<span id="t1Period"></span>): </td>
+                  <td id ="t1CPI">-</td>
+              </tr>
+              <tr>
+                  <td>CPI (<span id="t2Period"></span>): </td>
+                  <td id="t2CPI">-</td>
+              </tr>
+              <tr>
+                  <td>Absolute&nbsp;%∆: </td>
+                  <td id="absoluteChange">-</td>
+              </tr>
+              <tr>
+                  <td>Annualized&nbsp;%∆: </td>
+                  <td id="annualizedChange">-</td>
+              </tr>
+          </table>
+      </div>
     </div>
-
-    <div class="info">
-        <table>
-            <tr>
-                <td>Base&nbsp;Year: </td>
-                <td id="baseYear">-</td>
-            </tr>
-            <tr>
-                <td>CPI&nbsp;(<span id="t1Period"></span>): </td>
-                <td id ="t1CPI">-</td>
-            </tr>
-            <tr>
-                <td>CPI (<span id="t2Period"></span>): </td>
-                <td id="t2CPI">-</td>
-            </tr>
-            <tr>
-                <td>Absolute&nbsp;%∆: </td>
-                <td id="absoluteChange">-</td>
-            </tr>
-            <tr>
-                <td>Annualized&nbsp;%∆: </td>
-                <td id="annualizedChange">-</td>
-            </tr>
-        </table>
-    </div>
-
     <hr>
 
     <details><summary>Formulae</summary>
