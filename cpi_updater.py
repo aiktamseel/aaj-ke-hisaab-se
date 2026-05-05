@@ -34,7 +34,7 @@ class CPIUpdater:
             sys.exit(1)
     
     def scrape_cpi_data(self):
-        """Scrape CPI data from Trading Economics website"""
+        """Scrape CPI data from Trading Economics summary text (static HTML)"""
         try:
             headers = {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -44,73 +44,62 @@ class CPIUpdater:
                 'Connection': 'keep-alive',
                 'Upgrade-Insecure-Requests': '1'
             }
-            
+    
             response = requests.get(self.url, headers=headers)
             response.raise_for_status()
-            
+    
             soup = BeautifulSoup(response.content, 'html.parser')
-            
-            # Find the table with CPI data
-            table = soup.find('table', class_='table table-hover')
-            if not table:
-                raise ValueError("Could not find the CPI data table")
-            
-            # Find header row to identify column positions
-            header_row = table.find('thead')
-            if not header_row:
-                raise ValueError("Could not find table header")
-            
-            header_cells = header_row.find_all('th')
-            column_mapping = {}
-            
-            for i, cell in enumerate(header_cells):
-                header_text = cell.get_text(strip=True).lower()
-                if 'last' in header_text:
-                    column_mapping['last'] = i
-                elif 'previous' in header_text:
-                    column_mapping['previous'] = i
-                elif 'reference' in header_text:
-                    column_mapping['reference'] = i
-            
-            # Verify we found all required columns
-            required_columns = ['last', 'previous', 'reference']
-            missing_columns = [col for col in required_columns if col not in column_mapping]
-            if missing_columns:
-                raise ValueError(f"Could not find columns: {missing_columns}")
-            
-            print(f"Column mapping: {column_mapping}")
-            
-            # Find the row containing "Consumer Price Index CPI"
-            rows = table.find_all('tr')
-            cpi_row = None
-            
-            for row in rows:
-                cells = row.find_all('td')
-                if cells and len(cells) > max(column_mapping.values()):
-                    first_cell = cells[0].get_text(strip=True)
-                    if "Consumer Price Index CPI" in first_cell:
-                        cpi_row = row
+    
+            # The summary is in a static <h2> tag, e.g.:
+            # "Consumer Price Index CPI in Pakistan increased to 282.39 points in
+            #  February from 281.62 points in January of 2026."
+            summary_tag = soup.find('h2', string=re.compile(r'Consumer Price Index', re.IGNORECASE))
+            if not summary_tag:
+                # Fallback: search all h2 tags for the right one
+                for tag in soup.find_all('h2'):
+                    if 'Consumer Price Index' in tag.get_text():
+                        summary_tag = tag
                         break
-            
-            if not cpi_row:
-                raise ValueError("Could not find Consumer Price Index CPI row")
-            
-            # Extract data using the identified column positions
-            cells = cpi_row.find_all('td')
-            last_value = float(cells[column_mapping['last']].get_text(strip=True))
-            previous_value = float(cells[column_mapping['previous']].get_text(strip=True))
-            reference_date = cells[column_mapping['reference']].get_text(strip=True)
-            
+    
+            if not summary_tag:
+                raise ValueError("Could not find CPI summary heading on the page")
+    
+            text = summary_tag.get_text(strip=True)
+            print(f"Found summary text: {text[:200]}")
+    
+            # Match pattern like:
+            # "...to 282.39 points in February from 281.62 points in January of 2026..."
+            match = re.search(
+                r'to\s+([\d,]+\.?\d*)\s+points?\s+in\s+(\w+)\s+from\s+([\d,]+\.?\d*)\s+points?\s+in\s+(\w+)\s+of\s+(\d{4})',
+                text,
+                re.IGNORECASE
+            )
+    
+            if not match:
+                raise ValueError(f"Could not parse CPI values from summary text: {text[:300]}")
+    
+            last_value     = float(match.group(1).replace(',', ''))
+            current_month  = match.group(2)   # e.g. "February"
+            previous_value = float(match.group(3).replace(',', ''))
+            prev_month_str = match.group(4)   # e.g. "January"
+            year           = int(match.group(5))
+    
+            # Handle year rollover: if current month is January, previous was December of prior year
+            current_month_num  = datetime.strptime(current_month, '%B').month
+            previous_month_num = datetime.strptime(prev_month_str, '%B').month
+            reference_year = year if current_month_num != 1 else year  # year in text is current month's year
+    
+            # Build reference date string matching what parse_reference_date() expects: "Feb 2026"
+            reference_date = f"{datetime.strptime(current_month, '%B').strftime('%b')} {reference_year}"
+    
             return {
                 'last_value': last_value,
                 'previous_value': previous_value,
-                'reference_date': reference_date
+                'reference_date': reference_date,
             }
-            
+    
         except requests.RequestException as e:
             print(f"Error fetching data from website: {e}")
-            print("This might be due to network issues or website changes.")
-            print("Please check the website manually and verify the script is working correctly.")
             sys.exit(1)
         except ValueError as e:
             print(f"Error parsing data: {e}")
