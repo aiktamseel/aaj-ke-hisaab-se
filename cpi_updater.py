@@ -46,52 +46,41 @@ class CPIUpdater:
                 'Upgrade-Insecure-Requests': '1'
             }
     
-            response = requests.get(self.url, headers=headers)
+            response = requests.get(self.url, headers=headers, timeout=30)
             response.raise_for_status()
     
-            soup = BeautifulSoup(response.content, 'html.parser')
+            # Force UTF-8 decoding and get full page text
+            response.encoding = 'utf-8'
+            page_text = response.text
     
-            # The summary is in a static <h2> tag, e.g.:
-            # "Consumer Price Index CPI in Pakistan increased to 282.39 points in
-            #  February from 281.62 points in January of 2026."
-            summary_tag = soup.find('h2', string=re.compile(r'Consumer Price Index', re.IGNORECASE))
-            if not summary_tag:
-                # Fallback: search all h2 tags for the right one
-                for tag in soup.find_all('h2'):
-                    if 'Consumer Price Index' in tag.get_text():
-                        summary_tag = tag
-                        break
+            # DEBUG: print the first 1000 chars so we can see what GitHub Actions receives
+            print("=== DEBUG: First 1000 chars of response ===")
+            print(page_text[:1000])
+            print("===========================================")
     
-            if not summary_tag:
-                raise ValueError("Could not find CPI summary heading on the page")
-    
-            text = summary_tag.get_text(strip=True)
-            print(f"Found summary text: {text[:200]}")
-    
-            # Match pattern like:
-            # "...to 282.39 points in February from 281.62 points in January of 2026..."
+            # Search the raw page text directly with regex — no tag hunting
             match = re.search(
                 r'to\s+([\d,]+\.?\d*)\s+points?\s+in\s+(\w+)\s+from\s+([\d,]+\.?\d*)\s+points?\s+in\s+(\w+)\s+of\s+(\d{4})',
-                text,
+                page_text,
                 re.IGNORECASE
             )
     
             if not match:
-                raise ValueError(f"Could not parse CPI values from summary text: {text[:300]}")
+                raise ValueError(
+                    f"Could not find CPI pattern in page. "
+                    f"Response status: {response.status_code}. "
+                    f"Page length: {len(page_text)} chars. "
+                    f"Check the DEBUG output above to see what the page returned."
+                )
     
             last_value     = float(match.group(1).replace(',', ''))
-            current_month  = match.group(2)   # e.g. "February"
+            current_month  = match.group(2)
             previous_value = float(match.group(3).replace(',', ''))
-            prev_month_str = match.group(4)   # e.g. "January"
             year           = int(match.group(5))
     
-            # Handle year rollover: if current month is January, previous was December of prior year
-            current_month_num  = datetime.strptime(current_month, '%B').month
-            previous_month_num = datetime.strptime(prev_month_str, '%B').month
-            reference_year = year if current_month_num != 1 else year  # year in text is current month's year
+            reference_date = f"{datetime.strptime(current_month, '%B').strftime('%b')} {year}"
     
-            # Build reference date string matching what parse_reference_date() expects: "Feb 2026"
-            reference_date = f"{datetime.strptime(current_month, '%B').strftime('%b')} {reference_year}"
+            print(f"Successfully parsed: {last_value} in {current_month} {year}, previous: {previous_value}")
     
             return {
                 'last_value': last_value,
